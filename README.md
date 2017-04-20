@@ -33,7 +33,7 @@ Code compiled without errors with cmake and make.
 
 ### Accuacy 
 run `./ExtendedKF ../data/obj_pose-laser-radar-synthetic-input.txt  
-../data/output3.txt` to get the first data accuacy
+../data/output3.txt` to get the data accuacy
 
     Accuracy - RMSE:
     0.0747166
