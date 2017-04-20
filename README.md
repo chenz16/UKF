@@ -49,12 +49,12 @@ This result assumed the following process noise factor
      std_a_ = 3; // Process noise standard deviation longitudinal acceleration in m/s^2
      std_yawdd_ = 3; // Process noise standard deviation yaw acceleration in rad/s^2
 
-To figure out if measurement and prediction of measurement from process model statistically makes sense, the NIS is calcuated:
+To figure out if measurement and prediction of measurement from process model statistically aligns, the NIS is calculated as :
 
        Number of Laser Measurement =240 NIS Laser =0.0201613. 
        Number of Radar Measurement =241 NIS Radar =0.039604
        
-Here the first 10 laser/radar measurement is not accounted to make sure the kalman filter prediction is stable. The NIS number is close to 5%. 
+Here the first 9 laser/radar measurement is not accounted to make sure the kalman filter prediction is stable. The NIS number is close to 5%. 
 
 To ensure the error is exactly within the criteria: `[.09, .10, .40, .30].`. The process noises are modifed as
 
@@ -84,34 +84,122 @@ Your Kalman Filter algorithm handles the first measurements appropriately.
 Your Kalman Filter algorithm first predicts then updates.
 Your Kalman Filter can handle radar and lidar measurements.`
 
-The algorithm treats the first measurement as initlization of the states (x). Normal steps of kalman filter calcuation are applied from the second measurement.  
+The algorithm treats the first measurement as initlization of the states (x). Normal steps of Unscented kalman filter calcuation are applied from the second measurement.  
 
-The algorithm predicted through calling the prediction function in the instance of `ekf_` defined from the class   `KalmanFilter`;  the algorithm then updated the states and covariance matrix through calling the update functions in the instance of `ekf_` defined from the class `KalmanFilter`. The update functions are different for laser and radar data. When laser data was dected, the update function is a standard update function of Kalman filter; when radar data was dected, the update function used extended kalman filter method. In the extended kalman filter, the prediction of current measurement is calcated through non-linear measurement functions h(x); the Jacobian matrix was obtained from h(x) and used for calculating the kalman gain K.    
+To predict the state in terms of mean and covariance in next time step, sigma points of current step states x (i.e. sampling points of state x within the defined uncertain range through convariance matrix P) are first generated. Next, the new states based on these sigma points are generated based on which the mean and covariance of the state at next time step are calcuated.
 
-     
-    ekf_.Predict();
+In the update step, we handle radar and lidar data seperately given lidar measurement is linear function of state x. The update of lidar measurement follows the standard kalman filter method, which i skip explanaiton here. 
 
-    /*****************************************************************************
-    *  Update
-    ****************************************************************************/
-    // Renew H, R before update
-    if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-      // Update measurement related matrix H and R
-      cout << "Sensor_Type: RADAR" << '\n'<<endl;
-      ekf_.H_ = tool.CalculateJacobian(ekf_.x_);
-      ekf_.R_ = R_radar_;
-      // Radar updates
-      ekf_.UpdateEKF(measurement_pack.raw_measurements_);
+The radar measurement is nonlinear function of the predicted state x. we use the sigma points of predicted states obtained in last step to calcaute the mean and convariance of the error between the measumrenet and prediction of measumrement. The kalman gain is calculated according. The the state and its convariance is udpated based on predicted state, kalman gain, error between measurement and measurement prediction. 
 
-    } else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER)  {
-      // Update measurement related matrix H and R
-      cout << "Sensor_Type: LASER" << '\n'<<endl;
-      ekf_.H_ = H_laser_;
-      ekf_.R_ = R_laser_;
+All the key step of UKF are implemented in ukf.cpp. 
 
-      // Laser updates
-      ekf_.Update(measurement_pack.raw_measurements_);
-    }
+`// Updates the state and the state covariance matrix using a radar measurement.
+void UKF::UpdateRadar(const VectorXd &z) {
+     int n_z = z.size(); //=3
+     MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
+     //transform sigma points into measurement space
+     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
+
+       // extract values for better readibility
+       double p_x  = Xsig_pred_(0,i);
+       double p_y  = Xsig_pred_(1,i);
+       double v    = Xsig_pred_(2,i);
+       double yaw  = Xsig_pred_(3,i);
+       double yawd = Xsig_pred_(4,i);
+       double v1 = cos(yaw)*v;
+       double v2 = sin(yaw)*v;
+
+       // measurement model
+       Zsig(0,i) = sqrt(p_x*p_x + p_y*p_y); //r
+       Zsig(1,i) = atan2(p_y, p_x);
+       Zsig(2,i) = (p_x*v1 + p_y*v2 ) / sqrt(p_x*p_x + p_y*p_y);
+       //Zsig(1,i) = yaw; //psi
+
+       float r = Zsig(0,i);
+       if (r<0.01) {
+         r=0.01;
+         Zsig(1,i) = atan2(p_y, r)*p_x/(fabs(p_x)+0.00001);                              //phi
+         Zsig(2,i) = (p_x*v1 + p_y*v2 ) / r; }  //r_dot
+
+       /*if (r < 0.01) {
+          r=0.01;
+          Zsig(1,i) = atan(p_y/r)*p_x/(fabs(p_x)+0.0001);
+          Zsig(2,i)  = (p_x*v1+p_y*v2)/r;}*/
+     }
+
+     //mean predicted measurement
+     VectorXd z_pred = VectorXd(n_z);
+     z_pred.fill(0.0);
+     for (int i=0; i < 2*n_aug_+1; i++) {
+         z_pred = z_pred + weights_(i) * Zsig.col(i);
+     }
+     //measurement covariance matrix S
+     MatrixXd S = MatrixXd(n_z,n_z);
+     S.fill(0.0);
+     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
+       //residual
+       VectorXd z_diff = Zsig.col(i) - z_pred;
+
+       //angle normalization
+       while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+       while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+
+       S = S + weights_(i) * z_diff * z_diff.transpose();
+     }
+
+     //add measurement noise covariance matrix
+      MatrixXd R_radar = MatrixXd(n_z,n_z);
+      R_radar <<    std_radr_*std_radr_, 0, 0,
+              0, std_radphi_*std_radphi_, 0,
+              0, 0,std_radrd_*std_radrd_;
+      S = S + R_radar;
+
+      MatrixXd Tc = MatrixXd(n_x_, n_z);
+      //calculate cross correlation matrix
+      Tc.fill(0.0);
+      for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
+         //residual
+         VectorXd z_diff = Zsig.col(i) - z_pred;
+         //angle normalization
+         while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+         while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+
+         // state difference
+         VectorXd x_diff = Xsig_pred_.col(i) - x_;
+         //angle normalization
+         while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+         while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+
+         Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+       }
+
+       //Kalman gain K;
+       MatrixXd K = Tc * S.inverse();
+
+       //residual
+       VectorXd z_diff = z - z_pred;
+
+       //angle normalization
+       while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+       while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+
+       //update state mean and covariance matrix
+       x_ = x_ + K * z_diff;
+
+       while (x_(3)> M_PI) x_(3)-=2.*M_PI;
+       while (x_(3)<-M_PI) x_(3)+=2.*M_PI;
+
+       P_ = P_ - K*S*K.transpose();
+       cout<<"Radar P_=\n"<<P_<<endl;
+
+       // NIS: normalization innovation Squared
+       float error = z_diff.transpose()*S.inverse()*z_diff;
+       Num_radar_meas += 1;
+       if (Num_radar_meas>=10 && error>7.8) {
+         Num_radar_meas_outlines += 1;
+         NIS_radar_ = Num_radar_meas_outlines/(Num_radar_meas-9);
+       } `
 
 
 
