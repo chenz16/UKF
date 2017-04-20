@@ -94,7 +94,7 @@ The radar measurement is nonlinear function of the predicted state x. we use the
 
 All the key step of UKF are implemented in ukf.cpp. 
 
-`// Updates the state and the state covariance matrix using a radar measurement.
+// Updates the state and the state covariance matrix using a radar measurement.
 void UKF::UpdateRadar(const VectorXd &z) {
      int n_z = z.size(); //=3
      MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
@@ -199,9 +199,7 @@ void UKF::UpdateRadar(const VectorXd &z) {
        if (Num_radar_meas>=10 && error>7.8) {
          Num_radar_meas_outlines += 1;
          NIS_radar_ = Num_radar_meas_outlines/(Num_radar_meas-9);
-       } `
-
-
+       }
 
 ### Code Efficiency
 
