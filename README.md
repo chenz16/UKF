@@ -56,18 +56,18 @@ To figure out if measurement and prediction of measurement from process model st
        
 Here the first 9 laser/radar measurement is not accounted to make sure the kalman filter prediction is stable. The NIS number is close to 5%. 
 
-To ensure the error is exactly within the criteria: `[.09, .10, .40, .30].`. The process noises are modifed as
+To ensure the error is exactly within the criteria: `[.09, .10, .40, .30].`. The process noises are modified as
 
      std_a_ = 2; // Process noise standard deviation longitudinal acceleration in m/s^2
      std_yawdd_ = 2; // Process noise standard deviation yaw acceleration in rad/s^2
      
- The NIS is calcuated as:
+ The NIS is calculated as:
  
      Number of Laser Measurement =240 NIS Laser =0.0282258
      Number of Radar Measurement =241 NIS Radar =0.0343348
 which are still within 5%. 
 
-The accuacy for the prediction is:
+The accuracy for the prediction is:
 
 Accuracy - RMSE:
 0.0700293
@@ -84,13 +84,13 @@ Your Kalman Filter algorithm handles the first measurements appropriately.
 Your Kalman Filter algorithm first predicts then updates.
 Your Kalman Filter can handle radar and lidar measurements.`
 
-The algorithm treats the first measurement as initlization of the states (x). Normal steps of Unscented kalman filter calcuation are applied from the second measurement.  
+The algorithm treats the first measurement as initialization of the states (x). Normal steps of Unscented kalman filter calculation are applied from the second measurement.  
 
-To predict the state in terms of mean and covariance in next time step, sigma points of current step states x (i.e. sampling points of state x within the defined uncertain range through convariance matrix P) are first generated. Next, the new states based on these sigma points are generated based on which the mean and covariance of the state at next time step are calcuated.
+To predict the state in terms of mean and covariance in next time step, sigma points of current step states x (i.e. sampling points of state x within the defined uncertain range through covariance matrix P) are first generated. Next, the new states based on these sigma points are predicted; then the mean and covariance of the state at next time step are calculated based on these predicted points.
 
-In the update step, we handle radar and lidar data seperately given lidar measurement is linear function of state x. The update of lidar measurement follows the standard kalman filter method, which i skip explanaiton here. 
+In the update step, we handle radar and lidar data separately given lidar measurement is linear function of state x. The update of lidar measurement follows the standard kalman filter method, which i skip explanation here. 
 
-The radar measurement is nonlinear function of the predicted state x. we use the sigma points of predicted states obtained in last step to calcaute the mean and convariance of the error between the measumrenet and prediction of measumrement. The kalman gain is calculated according. The the state and its convariance is udpated based on predicted state, kalman gain, error between measurement and measurement prediction. 
+The radar measurement is nonlinear function of the predicted state x. we use the sigma points of predicted states obtained in last step to calculate the mean and covariance of the error between the measumrenet and prediction of measurement. The kalman gain is calculated accordingly. The the state and its covariance is updated based on predicted state, kalman gain, error between measurement and measurement prediction. 
 
 All the key step of UKF are implemented in ukf.cpp. 
 
@@ -203,10 +203,11 @@ All the key step of UKF are implemented in ukf.cpp.
          NIS_radar_ = Num_radar_meas_outlines/(Num_radar_meas-9);
        }
 
+To check if the process model align with the measurement, i calculated the NIS of radar and lidar. I assumed the sensing standard deviation is accurate and the process noise is something i need to tune. To tune those process noise standard deviation, i am able to make the RMSE within the criteria and also make NIS within 5%. 
+
 ### Code Efficiency
 
 `Your algorithm should avoid unnecessary calculations.`
 
 The code follows the general approach of the sample code from the course material. 
-
 
