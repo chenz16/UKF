@@ -34,6 +34,7 @@ Code compiled without errors with cmake and make.
 ### Accuacy 
 run `./ExtendedKF ../data/obj_pose-laser-radar-synthetic-input.txt  
 ../data/output3.txt` to get the first data accuacy
+
 Accuracy - RMSE:
 0.0747166
 0.088438
@@ -41,7 +42,7 @@ Accuracy - RMSE:
 0.308456
 
 which is quite close to the criteria:
-[.09, .10, .40, .30].
+`[.09, .10, .40, .30].`
 
 This result assumed the following process noise factor 
 
@@ -55,6 +56,26 @@ To figure out if measurement and prediction of measurement from process model st
        
 Here the first 10 laser/radar measurement is not accounted to make sure the kalman filter prediction is stable. The NIS number is close to 5%. 
 
+To ensure the error is exactly within the criteria: `[.09, .10, .40, .30].`. The process noises are modifed as
+
+     std_a_ = 2; // Process noise standard deviation longitudinal acceleration in m/s^2
+     std_yawdd_ = 2; // Process noise standard deviation yaw acceleration in rad/s^2
+     
+ The NIS is calcuated as:
+ 
+     Number of Laser Measurement =240 NIS Laser =0.0282258
+     Number of Radar Measurement =241 NIS Radar =0.0343348
+which are still within 5%. 
+
+The accuacy for the prediction is:
+
+Accuracy - RMSE:
+0.0700293
+ 0.085612
+ 0.355426
+ 0.253763
+
+which falls into the criteria `[.09, .10, .40, .30].`
 
 ### Follows the Correct Algorithm
 
