@@ -92,7 +92,7 @@ In the update step, I handle radar and lidar data separately given lidar measure
 
 The radar measurement is nonlinear function of the predicted state x. I use the sigma points of predicted states obtained in last step to calculate the mean and covariance of the error between the measumrenet and prediction of measurement. The kalman gain is calculated accordingly. The the state and its covariance is updated based on predicted state, kalman gain, error between measurement and measurement prediction. 
 
-All the key step of UKF are implemented in ukf.cpp. 
+All the key steps of UKF are implemented in ukf.cpp. 
 
     // Updates the state and the state covariance matrix using a radar measurement.
 
