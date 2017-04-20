@@ -35,11 +35,11 @@ Code compiled without errors with cmake and make.
 run `./ExtendedKF ../data/obj_pose-laser-radar-synthetic-input.txt  
 ../data/output3.txt` to get the first data accuacy
 
-Accuracy - RMSE:
-0.0747166
-0.088438
-0.382311
-0.308456
+    Accuracy - RMSE:
+    0.0747166
+    0.088438
+    0.382311
+    0.308456
 
 which is quite close to the criteria:
 `[.09, .10, .40, .30].`
