@@ -88,9 +88,9 @@ The algorithm treats the first measurement as initialization of the states (x). 
 
 To predict the state in terms of mean and covariance in next time step, sigma points of current step states x (i.e. sampling points of state x within the defined uncertain range through covariance matrix P) are first generated. Next, the new states based on these sigma points are predicted; then the mean and covariance of the state at next time step are calculated based on these predicted points.
 
-In the update step, we handle radar and lidar data separately given lidar measurement is linear function of state x. The update of lidar measurement follows the standard kalman filter method, which i skip explanation here. 
+In the update step, I handle radar and lidar data separately given lidar measurement is linear function of state x. The update of lidar measurement follows the standard kalman filter method, which i skip explanation here. 
 
-The radar measurement is nonlinear function of the predicted state x. we use the sigma points of predicted states obtained in last step to calculate the mean and covariance of the error between the measumrenet and prediction of measurement. The kalman gain is calculated accordingly. The the state and its covariance is updated based on predicted state, kalman gain, error between measurement and measurement prediction. 
+The radar measurement is nonlinear function of the predicted state x. I use the sigma points of predicted states obtained in last step to calculate the mean and covariance of the error between the measumrenet and prediction of measurement. The kalman gain is calculated accordingly. The the state and its covariance is updated based on predicted state, kalman gain, error between measurement and measurement prediction. 
 
 All the key step of UKF are implemented in ukf.cpp. 
 
@@ -210,4 +210,3 @@ To check if the process model align with the measurement, i calculated the NIS o
 `Your algorithm should avoid unnecessary calculations.`
 
 The code follows the general approach of the sample code from the course material. 
-
