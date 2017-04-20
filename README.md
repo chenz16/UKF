@@ -44,7 +44,7 @@ run `./ExtendedKF ../data/obj_pose-laser-radar-synthetic-input.txt
 which is quite close to the criteria:
 `[.09, .10, .40, .30].`
 
-This result assumed the following process noise factor 
+This result assumed the following process noise factor levels
 
      std_a_ = 3; // Process noise standard deviation longitudinal acceleration in m/s^2
      std_yawdd_ = 3; // Process noise standard deviation yaw acceleration in rad/s^2
