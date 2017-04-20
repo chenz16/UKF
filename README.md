@@ -69,11 +69,11 @@ which are still within 5%.
 
 The accuracy for the prediction is:
 
-Accuracy - RMSE:
-0.0700293
- 0.085612
- 0.355426
- 0.253763
+    Accuracy - RMSE:
+    0.0700293
+    0.085612
+    0.355426
+    0.253763
 
 which falls into the criteria `[.09, .10, .40, .30].`
 
